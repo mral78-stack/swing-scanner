@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+
+# Scanner specific
+scanner_cache/
+scanner_results/
+*.pkl
+*.log
+*.json
+!requirements.txt
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.localized
+
+# Sensitive data
+.env
+*.key
+*.pem
+secrets/
+*.token
+config.ini
+
+# Trading data (sensitive)
+*trading_data.json
+*_trades.json
+*_backup.json
+kalshi_trading_data.json
+sim_trades.json
+sim_trades_85-99_backup.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*~
