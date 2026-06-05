@@ -1,117 +1,89 @@
-# 🏛️ Institutional-Grade Swing Trade Scanner
+# swing-scanner
 
-Professional swing trading opportunity scanner for **US and Brazilian markets** with comprehensive technical and fundamental analysis.
+[![CI](https://github.com/mral78-stack/swing-scanner/actions/workflows/ci.yml/badge.svg)](https://github.com/mral78-stack/swing-scanner/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 
-## ⭐ Features
+A swing-trading opportunity scanner for **US and Brazilian (B3)** equities, combining technical, fundamental, momentum, and risk metrics into a single AAA→D rating per ticker.
 
-- **20+ Technical Indicators**: RSI, MACD, Stochastic, ADX, Ichimoku Cloud, and more
-- **Comprehensive Fundamental Analysis**: Valuation, profitability, growth metrics
-- **AAA-D Opportunity Rating System**: Clear, institutional-grade ratings
-- **Market Regime Detection**: Bull, Bear, or Sideways market identification
-- **Brazil Market Support**: Full B3 coverage with currency conversion
-- **Streamlit Dashboard**: Interactive web interface
-- **Parallel Processing**: 10x faster scanning (1-3 min for 500+ stocks)
-- **GitHub Integration**: Automatic result tracking
+The project is built on free data sources (`yfinance` by default, with optional fallback to Alpha Vantage, Polygon.io and IEX Cloud) and ships a [Streamlit](https://streamlit.io) dashboard for interactive exploration.
 
-## 🚀 Quick Start
-
-### Installation
-```bash
-pip install -r requirements.txt
-```
-
-### Run Scanner
-```bash
-# Basic scan
-python institutional_scanner.py --scan
-
-# High-quality opportunities only (AAA-AA)
-python institutional_scanner.py --scan --min-rating AA
-
-# Maximum performance
-python institutional_scanner.py --scan --max-workers 20 --min-rating A
-```
-
-### Launch Dashboard
-```bash
-streamlit run streamlit_institutional.py
-```
-
-## 📊 Opportunity Rating System
-
-| Grade | Score | Recommendation |
-|-------|-------|----------------|
-| **AAA** | 90-100 | EXCEPTIONAL BUY |
-| **AA** | 85-89 | STRONG BUY |
-| **A** | 80-84 | BUY |
-| **BBB** | 75-79 | MODERATE BUY |
-| **BB-B** | 65-74 | WATCH/CAUTIOUS |
-| **CCC-D** | <65 | AVOID |
-
-## 📁 Files
-
-- `institutional_scanner.py` - Main institutional-grade scanner ⭐
-- `streamlit_institutional.py` - Interactive dashboard ⭐
-- `stockmonitor_enhanced.py` - Enhanced scanner with parallel processing
-- `stockmonitor.py` - Original scanner (TWS integration)
-
-## 📚 Documentation
-
-- [SCANNER_README.md](SCANNER_README.md) - Complete usage guide
-- [INSTITUTIONAL_FEATURES.md](INSTITUTIONAL_FEATURES.md) - Feature documentation
-- [QUICK_START.md](QUICK_START.md) - Quick setup guide
-- [GITHUB_SETUP.md](GITHUB_SETUP.md) - GitHub repository setup
-
-## 🎯 Usage Example
-
-```python
-from institutional_scanner import run_institutional_scan
-
-# Run scan
-results, tradeable, non_tradeable = run_institutional_scan(
-    max_workers=15,
-    min_rating='AA'
-)
-
-# Display top opportunities
-for r in results[:10]:
-    print(f"{r['Ticker']}: {r['Rating_Grade']} ({r['Rating_Score']:.1f})")
-    print(f"  {r['Recommendation']}")
-```
-
-## 🔧 Requirements
-
-- Python 3.8+
-- See `requirements.txt` for dependencies
-
-## 📈 Performance
-
-- **Scan Time**: 1-3 minutes for 500+ stocks (with 10 workers)
-- **Coverage**: US + Brazil markets
-- **Accuracy**: Multi-factor analysis reduces false positives
-
-## 🚀 Deployment
-
-### Streamlit Cloud
-1. Push to GitHub
-2. Deploy on https://share.streamlit.io/
-3. Set main file: `streamlit_institutional.py`
-
-See [GITHUB_SETUP.md](GITHUB_SETUP.md) for detailed setup.
-
-## 📝 License
-
-Educational purposes only. Use at your own risk.
-
-## 🤝 Contributing
-
-Contributions welcome! Areas for improvement:
-- Additional technical indicators
-- Machine learning integration
-- More market coverage
-- Real-time alerts
+> **Status:** personal / educational project, single maintainer. Not financial advice. Use at your own risk.
 
 ---
 
-**Version**: 7.0  
-**Status**: Production Ready ✅
+## Install
+
+Requires Python 3.10+.
+
+```bash
+git clone https://github.com/mral78-stack/swing-scanner.git
+cd swing-scanner
+pip install -r requirements.txt
+```
+
+## Run
+
+```bash
+# CLI scan (all tickers, default rating threshold)
+python institutional_scanner.py --scan
+
+# Filter to AA+ opportunities, 20 parallel workers
+python institutional_scanner.py --scan --min-rating AA --max-workers 20
+
+# Interactive dashboard
+streamlit run streamlit_institutional.py
+```
+
+The scanner caches results under `scanner_cache/` and writes structured output to `scanner_results/` (both git-ignored).
+
+## What it does
+
+For each ticker it computes:
+
+| Component       | Weight | Examples |
+|-----------------|--------|----------|
+| Technical       | 50%    | SMA 20/50/200, RSI, MACD, Stochastic, ADX, Ichimoku, Aroon, OBV, MFI, support/resistance |
+| Fundamental     | 30%    | P/E, P/B, ROE, ROA, debt/equity, current ratio, revenue/earnings growth, institutional ownership |
+| Momentum        | 20%    | Weekly/monthly returns, ROC, relative strength vs. benchmark |
+| Risk (penalty)  | —      | ATR, max drawdown, Sharpe, Sortino, Calmar, beta |
+
+Components are blended into a **0–100 score** mapped to a rating (`AAA`/`AA`/`A`/`BBB`/`BB`/`B`/`CCC`/`CC`/`C`/`D`). A market-regime classifier (BULL / BEAR / SIDEWAYS) is reported alongside the rating to contextualize the signal.
+
+See [FEATURES.md](FEATURES.md) for the full indicator list and scoring breakdown.
+
+## Data sources
+
+`yfinance` is the default source and works out of the box for both US and B3 tickers. Optional fallback sources are wired in for resilience — see [DATA_SOURCES.md](DATA_SOURCES.md) for setup.
+
+| Source | Required key | Markets | Free tier |
+|--------|--------------|---------|-----------|
+| yfinance | — | US, B3 | unlimited (best-effort) |
+| Alpha Vantage | `ALPHA_VANTAGE_API_KEY` | US | 500/day |
+| Polygon.io | `POLYGON_API_KEY` | US | 5/min |
+| IEX Cloud | `IEX_CLOUD_API_KEY` | US | 50k msg/month |
+
+## Project layout
+
+```
+.
+├── institutional_scanner.py      # CLI entrypoint, scoring engine
+├── stockmonitor_enhanced.py      # Older scanner kept for reference
+├── stockmonitor_scanner_only.py  # Scanner-only build (no GitHub auto-push)
+├── data_sources.py               # Multi-source data adapter with fallback chain
+├── market_tickers.py             # US + B3 ticker universes
+├── streamlit_institutional.py    # Dashboard (institutional scanner)
+├── streamlit_scanner.py          # Dashboard (legacy)
+├── test_yfinance.py              # Smoke test for the yfinance dependency
+├── FEATURES.md
+├── DATA_SOURCES.md
+└── requirements.txt
+```
+
+## Contributing
+
+PRs and issues welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE).

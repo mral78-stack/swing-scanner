@@ -1,0 +1,21 @@
+target-version = "py310"
+line-length = 120
+
+[lint]
+# Keep CI green on the legacy scanner code while still catching real bugs.
+# These rules are excluded because the existing scanner predates this config
+# and a stylistic sweep is out of scope for the current PR.
+select = ["E", "F", "I", "B", "UP"]
+ignore = [
+    "E501",   # line-too-long: covered by line-length, not all violations are worth a wrap
+    "E402",   # module-level import not at top: streamlit_*.py sets st.set_page_config first
+    "E722",   # bare-except: legacy data-fetch paths swallow yfinance exceptions
+    "E741",   # ambiguous variable name (l/I/O)
+    "F401",   # unused-import: streamlit re-exports are intentional
+    "F841",   # unused local variable: kept for debug visibility in scoring loops
+    "B008",   # function-call-in-default: pandas-default patterns
+    "UP032",  # f-string conversion: leave existing format() calls alone
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["E501"]
