@@ -10,21 +10,23 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field
-import logging
-import json
-import os
-import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import warnings
-from functools import lru_cache
 import hashlib
-import pickle
+import json
+import logging
 import logging as std_logging
+import os
+import pickle
+import sys
+import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from functools import lru_cache
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
 warnings.filterwarnings('ignore')
 
 # Suppress yfinance verbose logging
@@ -81,8 +83,8 @@ class OpportunityRating:
     risk_score: float  # 0-20 (lower is better)
     confidence: float  # 0-100
     recommendation: str
-    key_strengths: List[str]
-    key_risks: List[str]
+    key_strengths: list[str]
+    key_risks: list[str]
     
     def __str__(self):
         return f"{self.grade} ({self.score:.1f}/100) - {self.recommendation}"
@@ -92,8 +94,8 @@ def calculate_opportunity_rating(
     fundamental_score: float,
     momentum_score: float,
     risk_score: float,
-    key_strengths: List[str],
-    key_risks: List[str]
+    key_strengths: list[str],
+    key_risks: list[str]
 ) -> OpportunityRating:
     """Calculate institutional-grade opportunity rating"""
     
@@ -189,13 +191,13 @@ def calculate_mfi(high: pd.Series, low: pd.Series, close: pd.Series,
     mfi = 100 - (100 / (1 + positive_flow / negative_flow))
     return float(mfi.iloc[-1])
 
-def calculate_aroon(high: pd.Series, low: pd.Series, period: int = 14) -> Tuple[float, float]:
+def calculate_aroon(high: pd.Series, low: pd.Series, period: int = 14) -> tuple[float, float]:
     """Aroon Indicator - Trend strength"""
     aroon_up = ((period - high.rolling(period).apply(lambda x: period - 1 - x.argmax())) / period) * 100
     aroon_down = ((period - low.rolling(period).apply(lambda x: period - 1 - x.argmin())) / period) * 100
     return float(aroon_up.iloc[-1]), float(aroon_down.iloc[-1])
 
-def calculate_ichimoku(high: pd.Series, low: pd.Series, close: pd.Series) -> Dict:
+def calculate_ichimoku(high: pd.Series, low: pd.Series, close: pd.Series) -> dict:
     """Ichimoku Cloud - Comprehensive trend analysis"""
     # Tenkan-sen (Conversion Line)
     period1_high = high.rolling(9).max()
@@ -241,7 +243,7 @@ def calculate_ichimoku(high: pd.Series, low: pd.Series, close: pd.Series) -> Dic
     }
 
 def calculate_fibonacci_levels(high: pd.Series, low: pd.Series, 
-                               lookback: int = 60) -> Dict:
+                               lookback: int = 60) -> dict:
     """Calculate Fibonacci retracement levels"""
     recent_high = high.iloc[-lookback:].max()
     recent_low = low.iloc[-lookback:].min()
@@ -280,7 +282,7 @@ def calculate_sortino_ratio(returns: pd.Series, risk_free_rate: float = 0.02) ->
     sortino = (excess_returns.mean() * 252) / (downside_returns.std() * np.sqrt(252))
     return float(sortino)
 
-def calculate_max_drawdown(close: pd.Series) -> Tuple[float, float]:
+def calculate_max_drawdown(close: pd.Series) -> tuple[float, float]:
     """Calculate Maximum Drawdown"""
     cumulative = (1 + close.pct_change()).cumprod()
     running_max = cumulative.expanding().max()
@@ -298,7 +300,7 @@ def calculate_calmar_ratio(returns: pd.Series, max_drawdown: float) -> float:
     return float(calmar)
 
 def calculate_vwap(high: pd.Series, low: pd.Series, close: pd.Series, 
-                   volume: pd.Series, period: int = 20) -> Tuple[float, float]:
+                   volume: pd.Series, period: int = 20) -> tuple[float, float]:
     """
     Calculate Volume Weighted Average Price (VWAP)
     Returns: (VWAP value, distance from current price in %)
@@ -318,7 +320,7 @@ def calculate_vwap(high: pd.Series, low: pd.Series, close: pd.Series,
 # 💼 FUNDAMENTAL ANALYSIS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def analyze_fundamentals(info: Dict, market: str = 'US') -> Tuple[float, List[str], List[str]]:
+def analyze_fundamentals(info: dict, market: str = 'US') -> tuple[float, list[str], list[str]]:
     """
     Comprehensive fundamental analysis
     Returns: (score, strengths, risks)
@@ -479,7 +481,7 @@ def analyze_fundamentals(info: Dict, market: str = 'US') -> Tuple[float, List[st
 # 📊 MARKET REGIME DETECTION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def detect_market_regime(data: pd.DataFrame, lookback: int = 60) -> Dict:
+def detect_market_regime(data: pd.DataFrame, lookback: int = 60) -> dict:
     """
     Detect market regime: Bull, Bear, or Sideways
     """
@@ -542,7 +544,7 @@ def convert_brl_to_usd(brl_value: float, rate: float = None) -> float:
         rate = get_usd_brl_rate()
     return brl_value / rate
 
-def get_b3_sector_info(ticker: str) -> Dict:
+def get_b3_sector_info(ticker: str) -> dict:
     """Get B3-specific sector information"""
     # B3 sector mapping (simplified - can be expanded)
     sector_map = {
@@ -568,7 +570,7 @@ def get_b3_sector_info(ticker: str) -> Dict:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def analyze_stock_institutional(ticker: str, sector: str = 'Unknown', 
-                                market: str = 'US') -> Optional[Dict]:
+                                market: str = 'US') -> dict | None:
     """
     Institutional-grade comprehensive stock analysis
     """
@@ -1038,12 +1040,12 @@ def analyze_stock_institutional(ticker: str, sector: str = 'Unknown',
 # Import helper functions (define if not available)
 try:
     from stockmonitor_enhanced import (
-        calculate_stochastic,
+        cache_data,
         calculate_adx,
-        find_support_resistance,
         calculate_obv,
+        calculate_stochastic,
+        find_support_resistance,
         get_cached_data,
-        cache_data
     )
 except ImportError:
     # Define fallback functions
@@ -1099,17 +1101,17 @@ except ImportError:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def run_institutional_scan(max_workers: int = 10, 
-                          min_rating: str = 'B') -> Tuple[List[Dict], List[Dict], List[Dict], Dict]:
+                          min_rating: str = 'B') -> tuple[list[dict], list[dict], list[dict], dict]:
     """
     Run institutional-grade scanner with parallel processing
     """
     # Import from market_tickers to avoid ib_insync import issues in Streamlit
     try:
-        from market_tickers import US_SECTORS, BRAZIL_SECTORS
+        from market_tickers import BRAZIL_SECTORS, US_SECTORS
     except ImportError:
         # Fallback: try importing from stockmonitor (may fail in Streamlit)
         try:
-            from stockmonitor import US_SECTORS, BRAZIL_SECTORS
+            from stockmonitor import BRAZIL_SECTORS, US_SECTORS
         except (ImportError, RuntimeError):
             # If both fail, define minimal sets
             logger.warning("Could not import sector definitions, using minimal set")
@@ -1189,10 +1191,10 @@ def run_institutional_scan(max_workers: int = 10,
     # Debug: Show rating distribution if no results
     if len(all_results) == 0:
         logger.warning(f"⚠️ No results found with rating >= {min_rating}")
-        logger.info(f"   This may indicate:")
+        logger.info("   This may indicate:")
         logger.info(f"   - All stocks scored below {min_rating} threshold")
-        logger.info(f"   - Many stocks may have failed data retrieval")
-        logger.info(f"   - Try lowering min_rating to 'D' to see all results")
+        logger.info("   - Many stocks may have failed data retrieval")
+        logger.info("   - Try lowering min_rating to 'D' to see all results")
     
     # Group by sector for reporting
     sector_groups = {}
@@ -1254,7 +1256,7 @@ if __name__ == "__main__":
         
         # Display sector breakdown
         print(f"\n{'═'*100}")
-        print(f"📊 OPPORTUNITIES BY SECTOR")
+        print("📊 OPPORTUNITIES BY SECTOR")
         print(f"{'═'*100}")
         print(f"{'Sector':<40} {'Count':>6} {'Avg Score':>10} {'Top Grade':>10}")
         print(f"{'─'*100}")

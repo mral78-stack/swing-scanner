@@ -3,28 +3,22 @@
 Institutional-Grade Streamlit Dashboard
 """
 
-import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
-from datetime import datetime
 import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
+
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
 sys.path.append(str(Path(__file__).parent))
 
 try:
-    from institutional_scanner import (
-        run_institutional_scan,
-        OpportunityRating
-    )
-    from stockmonitor_enhanced import (
-        save_results_to_json,
-        save_results_to_csv,
-        RESULTS_DIR
-    )
+    from institutional_scanner import OpportunityRating, run_institutional_scan
+    from stockmonitor_enhanced import RESULTS_DIR, save_results_to_csv, save_results_to_json
 except ImportError as e:
     error_msg = str(e)
     if "yfinance" in error_msg.lower():

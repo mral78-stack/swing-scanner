@@ -3,15 +3,16 @@
 Streamlit Dashboard for Enhanced Swing Trade Scanner
 """
 
-import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
-from datetime import datetime
 import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
+
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
 # Add parent directory to path to import scanner modules
 sys.path.append(str(Path(__file__).parent))
@@ -19,12 +20,12 @@ sys.path.append(str(Path(__file__).parent))
 # Import enhanced scanner
 try:
     from stockmonitor_enhanced import (
-        run_scanner_analysis_parallel,
-        save_results_to_json,
-        save_results_to_csv,
+        RESULTS_DIR,
         commit_and_push_results,
+        run_scanner_analysis_parallel,
+        save_results_to_csv,
+        save_results_to_json,
         setup_git_repo,
-        RESULTS_DIR
     )
 except ImportError:
     st.error("⚠️ Could not import enhanced scanner. Make sure stockmonitor_enhanced.py is in the same directory.")
@@ -118,7 +119,7 @@ def load_latest_results():
     if json_files:
         latest_file = os.path.join(RESULTS_DIR, json_files[0])
         try:
-            with open(latest_file, 'r') as f:
+            with open(latest_file) as f:
                 return json.load(f)
         except:
             pass

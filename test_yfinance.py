@@ -19,7 +19,7 @@ try:
     print("\nTesting data fetch...")
     ticker = yf.Ticker("AAPL")
     info = ticker.info
-    print(f"✅ Successfully fetched data for AAPL")
+    print("✅ Successfully fetched data for AAPL")
     print(f"   Company: {info.get('shortName', 'N/A')}")
     
 except ImportError as e:

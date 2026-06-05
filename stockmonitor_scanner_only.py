@@ -9,18 +9,19 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field
-import logging
+import argparse
 import json
+import logging
 import os
 import sys
-import argparse
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any
+
+import numpy as np
+import pandas as pd
 
 warnings.filterwarnings('ignore')
 
@@ -44,7 +45,7 @@ logger = logging.getLogger('StockScanner')
 
 # Import from market_tickers if available, otherwise define here
 try:
-    from market_tickers import US_SECTORS, BRAZIL_SECTORS
+    from market_tickers import BRAZIL_SECTORS, US_SECTORS
 except ImportError:
     # Fallback definitions (minimal set)
     US_SECTORS = {
@@ -60,7 +61,7 @@ except ImportError:
 # 🔍 STOCK ANALYSIS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def analyze_single_stock(ticker: str, sector: str = 'Unknown', market: str = 'US') -> Optional[Dict]:
+def analyze_single_stock(ticker: str, sector: str = 'Unknown', market: str = 'US') -> dict | None:
     """Analyze a single stock with technical analysis"""
     try:
         stock = yf.Ticker(ticker)
@@ -235,7 +236,7 @@ def analyze_single_stock(ticker: str, sector: str = 'Unknown', market: str = 'US
 # 🚀 PARALLEL SCANNER
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def run_scanner_analysis(max_workers: int = 10, min_score: int = 30) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+def run_scanner_analysis(max_workers: int = 10, min_score: int = 30) -> tuple[list[dict], list[dict], list[dict]]:
     """
     Run the stock scanner and return results for both markets.
     No IBKR/TWS required - pure scanner only.
@@ -386,7 +387,7 @@ def main():
         
         # Summary
         print(f"\n{'═'*80}")
-        print(f"📊 SUMMARY")
+        print("📊 SUMMARY")
         print(f"{'═'*80}")
         print(f"   Total scanned: {len(all_results)}")
         print(f"   US stocks: {len(us_results)}")

@@ -9,31 +9,32 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field
-import threading
-import queue
-import time
-import logging
-import json
-import os
-import sys
 import argparse
-from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
-import warnings
-from functools import lru_cache
 import hashlib
+import json
+import logging
+import os
 import pickle
+import queue
+import sys
+import threading
+import time
+import warnings
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from functools import lru_cache
+from typing import Any
+
+import numpy as np
+import pandas as pd
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
 
 # Import yfinance for market data
-import yfinance as yf
 import requests
+import yfinance as yf
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🔧 LOGGING CONFIGURATION
@@ -60,7 +61,7 @@ def get_cache_key(ticker: str, market: str) -> str:
     return hashlib.md5(f"{ticker}_{market}".encode()).hexdigest()
 
 @lru_cache(maxsize=1000)
-def get_cached_data(ticker: str, period: str = '1y') -> Optional[pd.DataFrame]:
+def get_cached_data(ticker: str, period: str = '1y') -> pd.DataFrame | None:
     """Get cached stock data"""
     cache_file = os.path.join(CACHE_DIR, f"{get_cache_key(ticker, 'US')}_{period}.pkl")
     if os.path.exists(cache_file):
@@ -82,7 +83,7 @@ def cache_data(ticker: str, data: pd.DataFrame, period: str = '1y'):
     except:
         pass
 
-def save_results_to_json(results: List[Dict], filename: str = None):
+def save_results_to_json(results: list[dict], filename: str = None):
     """Save scan results to JSON file"""
     if filename is None:
         filename = f"scan_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -133,7 +134,7 @@ def save_results_to_json(results: List[Dict], filename: str = None):
     logger.info(f"💾 Results saved to {filepath}")
     return filepath
 
-def save_results_to_csv(results: List[Dict], filename: str = None):
+def save_results_to_csv(results: list[dict], filename: str = None):
     """Save scan results to CSV file"""
     if filename is None:
         filename = f"scan_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
@@ -159,7 +160,7 @@ def save_results_to_csv(results: List[Dict], filename: str = None):
 
 # Import GitHub integration functions
 try:
-    from github_integration import setup_git_repo, commit_and_push_results
+    from github_integration import commit_and_push_results, setup_git_repo
 except ImportError:
     # Fallback if github_integration not available
     def setup_git_repo(repo_path: str = ".", remote_url: str = None):
@@ -205,7 +206,7 @@ except ImportError:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, 
-                        period: int = 14) -> Tuple[float, float]:
+                        period: int = 14) -> tuple[float, float]:
     """Calculate Stochastic Oscillator (%K and %D)"""
     lowest_low = low.rolling(period).min()
     highest_high = high.rolling(period).max()
@@ -242,7 +243,7 @@ def calculate_adx(high: pd.Series, low: pd.Series, close: pd.Series,
     return float(adx.iloc[-1]) if not pd.isna(adx.iloc[-1]) else 0.0
 
 def find_support_resistance(high: pd.Series, low: pd.Series, close: pd.Series, 
-                           lookback: int = 20) -> Tuple[float, float]:
+                           lookback: int = 20) -> tuple[float, float]:
     """Find support and resistance levels"""
     recent_high = high.iloc[-lookback:].max()
     recent_low = low.iloc[-lookback:].min()
@@ -263,7 +264,7 @@ def find_support_resistance(high: pd.Series, low: pd.Series, close: pd.Series,
     return float(support), float(resistance)
 
 def calculate_volume_profile(volume: pd.Series, close: pd.Series, 
-                            bins: int = 20) -> Dict:
+                            bins: int = 20) -> dict:
     """Calculate volume profile"""
     price_bins = np.linspace(close.min(), close.max(), bins)
     volume_dist = pd.cut(close, bins=price_bins, labels=False)
@@ -289,7 +290,7 @@ def calculate_obv(close: pd.Series, volume: pd.Series) -> float:
     obv = (np.sign(close.diff()) * volume).fillna(0).cumsum()
     return float(obv.iloc[-1])
 
-def detect_chart_patterns(high: pd.Series, low: pd.Series, close: pd.Series) -> List[str]:
+def detect_chart_patterns(high: pd.Series, low: pd.Series, close: pd.Series) -> list[str]:
     """Detect common chart patterns"""
     patterns = []
     
@@ -325,7 +326,7 @@ def detect_chart_patterns(high: pd.Series, low: pd.Series, close: pd.Series) -> 
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def analyze_single_stock_enhanced(ticker: str, sector: str = 'Unknown', 
-                                   market: str = 'US') -> Optional[Dict]:
+                                   market: str = 'US') -> dict | None:
     """Enhanced stock analysis with additional indicators"""
     try:
         # Try cache first
@@ -460,7 +461,7 @@ def analyze_single_stock_enhanced(ticker: str, sector: str = 'Unknown',
             signals.append(f'Stoch Oversold (K:{stoch_k:.1f}, D:{stoch_d:.1f})')
         elif stoch_k > 80 and stoch_d > 80:
             score -= 5
-            signals.append(f'⚠️ Stoch Overbought')
+            signals.append('⚠️ Stoch Overbought')
         
         # NEW: ADX (trend strength)
         if adx > 25:
@@ -589,17 +590,17 @@ def analyze_single_stock_enhanced(ticker: str, sector: str = 'Unknown',
 # 🚀 PARALLEL SCANNER
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def run_scanner_analysis_parallel(max_workers: int = 10) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+def run_scanner_analysis_parallel(max_workers: int = 10) -> tuple[list[dict], list[dict], list[dict]]:
     """
     Run scanner with parallel processing for better performance
     """
     # Import from market_tickers to avoid ib_insync import issues
     try:
-        from market_tickers import US_SECTORS, BRAZIL_SECTORS
+        from market_tickers import BRAZIL_SECTORS, US_SECTORS
     except ImportError:
         # Fallback: try importing from stockmonitor (may fail in Streamlit)
         try:
-            from stockmonitor import US_SECTORS, BRAZIL_SECTORS
+            from stockmonitor import BRAZIL_SECTORS, US_SECTORS
         except (ImportError, RuntimeError):
             # If both fail, define minimal sets
             US_SECTORS = {'Technology': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']}
@@ -754,7 +755,7 @@ def main():
             commit_and_push_results()
         
         print(f"\n{'═'*80}")
-        print(f"📊 SUMMARY")
+        print("📊 SUMMARY")
         print(f"{'═'*80}")
         print(f"   Total scanned: {len(all_results)}")
         print(f"   US stocks: {len(us_results)}")

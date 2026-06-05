@@ -4,13 +4,13 @@ Multi-Source Financial Data Fetcher
 Supports multiple APIs as fallbacks for robust data retrieval
 """
 
-import pandas as pd
-import numpy as np
-from typing import Optional, Dict, Tuple
 import logging
 import time
-import requests
 from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import requests
 
 logger = logging.getLogger('DataSources')
 
@@ -18,7 +18,7 @@ logger = logging.getLogger('DataSources')
 # 📊 DATA SOURCE 1: YAHOO FINANCE (yfinance) - Primary
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def fetch_yfinance(ticker: str, period: str = '1y') -> Optional[pd.DataFrame]:
+def fetch_yfinance(ticker: str, period: str = '1y') -> pd.DataFrame | None:
     """Fetch data from Yahoo Finance via yfinance"""
     try:
         import yfinance as yf
@@ -36,7 +36,7 @@ def fetch_yfinance(ticker: str, period: str = '1y') -> Optional[pd.DataFrame]:
 # 📊 DATA SOURCE 2: ALPHA VANTAGE - Fallback
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def fetch_alphavantage(ticker: str, api_key: Optional[str] = None) -> Optional[pd.DataFrame]:
+def fetch_alphavantage(ticker: str, api_key: str | None = None) -> pd.DataFrame | None:
     """
     Fetch data from Alpha Vantage
     Free tier: 5 API calls per minute, 500 calls per day
@@ -53,7 +53,7 @@ def fetch_alphavantage(ticker: str, api_key: Optional[str] = None) -> Optional[p
         # Remove .SA suffix for Alpha Vantage (US stocks only)
         clean_ticker = ticker.replace('.SA', '')
         
-        url = f"https://www.alphavantage.co/query"
+        url = "https://www.alphavantage.co/query"
         params = {
             'function': 'TIME_SERIES_DAILY_ADJUSTED',
             'symbol': clean_ticker,
@@ -108,7 +108,7 @@ def fetch_alphavantage(ticker: str, api_key: Optional[str] = None) -> Optional[p
 # 📊 DATA SOURCE 3: POLYGON.IO - Fallback
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def fetch_polygon(ticker: str, api_key: Optional[str] = None) -> Optional[pd.DataFrame]:
+def fetch_polygon(ticker: str, api_key: str | None = None) -> pd.DataFrame | None:
     """
     Fetch data from Polygon.io
     Free tier: 5 API calls per minute
@@ -172,7 +172,7 @@ def fetch_polygon(ticker: str, api_key: Optional[str] = None) -> Optional[pd.Dat
 # 📊 DATA SOURCE 4: IEX CLOUD - Fallback
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def fetch_iexcloud(ticker: str, api_key: Optional[str] = None) -> Optional[pd.DataFrame]:
+def fetch_iexcloud(ticker: str, api_key: str | None = None) -> pd.DataFrame | None:
     """
     Fetch data from IEX Cloud
     Free tier: 50,000 messages per month
@@ -230,7 +230,7 @@ def fetch_iexcloud(ticker: str, api_key: Optional[str] = None) -> Optional[pd.Da
 # 📊 DATA SOURCE 5: YAHOO FINANCE DIRECT (Web Scraping Fallback)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def fetch_yahoo_direct(ticker: str) -> Optional[pd.DataFrame]:
+def fetch_yahoo_direct(ticker: str) -> pd.DataFrame | None:
     """
     Direct Yahoo Finance web scraping as last resort
     Note: This is less reliable and may violate ToS - use sparingly
@@ -263,9 +263,9 @@ def fetch_stock_data(ticker: str,
                     use_alphavantage: bool = True,
                     use_polygon: bool = True,
                     use_iexcloud: bool = True,
-                    alphavantage_key: Optional[str] = None,
-                    polygon_key: Optional[str] = None,
-                    iexcloud_key: Optional[str] = None) -> Optional[pd.DataFrame]:
+                    alphavantage_key: str | None = None,
+                    polygon_key: str | None = None,
+                    iexcloud_key: str | None = None) -> pd.DataFrame | None:
     """
     Fetch stock data with automatic fallback to multiple sources
     
@@ -344,7 +344,7 @@ def fetch_stock_data(ticker: str,
 # 📊 GET STOCK INFO (Company Information)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def get_stock_info(ticker: str) -> Optional[Dict]:
+def get_stock_info(ticker: str) -> dict | None:
     """Get stock info/company information"""
     try:
         import yfinance as yf
@@ -373,4 +373,4 @@ if __name__ == "__main__":
             print(f"✅ Success! Got {len(data)} days of data")
             print(f"   Latest close: ${data['Close'].iloc[-1]:.2f}")
         else:
-            print(f"❌ Failed to fetch data")
+            print("❌ Failed to fetch data")
